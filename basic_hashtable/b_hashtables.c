@@ -100,7 +100,20 @@ void hash_table_insert(BasicHashTable *ht, char *key, char *value)
  ****/
 void hash_table_remove(BasicHashTable *ht, char *key)
 {
-
+  // Find index
+  int index = hash(key, ht->capacity);
+  // Check if key matches
+  if (ht->storage[index] != NULL) {
+    if (strcmp(ht->storage[index]->key, key) == 0) {
+      free(ht->storage[index]->key);
+      free(ht->storage[index]->value);
+      ht->storage[index] = NULL; 
+    } else {
+      printf("Keys don't match\n");
+    }
+  } else {
+    printf("Keys don't match\n");
+  }
 }
 
 /****
@@ -121,6 +134,7 @@ char *hash_table_retrieve(BasicHashTable *ht, char *key)
     }
   } else {
     printf("Keys don't match\n");
+    return NULL; 
   }
 }
 
@@ -134,8 +148,7 @@ void destroy_hash_table(BasicHashTable *ht)
   // Free all elements
   for (int i = 0; i < ht->capacity; i++) {
     if(ht->storage[i] != NULL) {
-      free(ht->storage[i]->value);
-      free(ht->storage[i]->key);
+      destroy_pair(ht->storage[i]);
     } else {
       free(ht->storage[i]);
     }
@@ -157,13 +170,13 @@ int main(void)
 
   hash_table_remove(ht, "line");
 
-  // if (hash_table_retrieve(ht, "line") == NULL) {
-  //   printf("...gone tomorrow. (success)\n");
-  // } else {
-  //   fprintf(stderr, "ERROR: STILL HERE\n");
-  // }
+  if (hash_table_retrieve(ht, "line") == NULL) {
+    printf("...gone tomorrow. (success)\n");
+  } else {
+    fprintf(stderr, "ERROR: STILL HERE\n");
+  }
 
-  // destroy_hash_table(ht);
+  destroy_hash_table(ht);
 
   return 0;
 }
