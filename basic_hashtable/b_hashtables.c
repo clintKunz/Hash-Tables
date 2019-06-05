@@ -131,7 +131,18 @@ char *hash_table_retrieve(BasicHashTable *ht, char *key)
  ****/
 void destroy_hash_table(BasicHashTable *ht)
 {
-  
+  // Free all elements
+  for (int i = 0; i < ht->capacity; i++) {
+    if(ht->storage[i] != NULL) {
+      free(ht->storage[i]->value);
+      free(ht->storage[i]->key);
+    } else {
+      free(ht->storage[i]);
+    }
+  }
+  // Free hash
+  free(ht->storage);
+  free(ht);
 }
 
 
@@ -140,13 +151,11 @@ int main(void)
 {
   struct BasicHashTable *ht = create_hash_table(16);
 
-  // Retrieve key 'line'
-
   hash_table_insert(ht, "line", "Here today...\n");
 
   printf("%s", hash_table_retrieve(ht, "line"));
 
-  // hash_table_remove(ht, "line");
+  hash_table_remove(ht, "line");
 
   // if (hash_table_retrieve(ht, "line") == NULL) {
   //   printf("...gone tomorrow. (success)\n");
