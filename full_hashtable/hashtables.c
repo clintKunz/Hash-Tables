@@ -104,10 +104,7 @@ void hash_table_insert(HashTable *ht, char *key, char *value)
       if (strcmp(key, stored_pair->key) == 0) {
         printf("Warning: Overwriting value with same key in Hash Table\n");
         //Revisit this next line
-        free(stored_pair->key);
-        free(stored_pair->value);
-        ht->storage[index]->key = pair->key;
-        ht->storage[index]->value = pair->value; 
+        stored_pair->value = value; 
         found_spot = 1;
       } else if (stored_pair->next == NULL) {
         stored_pair->next = pair; 
@@ -129,7 +126,37 @@ void hash_table_insert(HashTable *ht, char *key, char *value)
  */
 void hash_table_remove(HashTable *ht, char *key)
 {
+  int index = hash(key, ht->storage);
+  LinkedPair *stored_pair = ht->storage[index];
 
+  if(stored_pair != NULL) {
+    int found_key = 0;
+    int passed_head = 0; 
+    while(!found_key) {
+      if(passed_head < 1 && strcmp(stored_pair->key, key) == 0) {
+        if(stored_pair->next == NULL) {
+          destroy_pair(stored_pair);
+          stored_pair = NULL; 
+          found_key = 1;
+        } else {
+          LinkedPair *stored_pair_temp = stored_pair->next;
+          destroy_pair(stored_pair);
+          stored_pair = stored_pair_temp;
+          found_key = 1;
+        }
+      } else if(strcmp(stored_pair->next->key, key) == 0) {
+        LinkedPair *stored_pair_temp = stored_pair->next; 
+        stored_pair->next = stored_pair->next->next;  
+        destroy_pair(stored_pair_temp);
+        found_key = 1;
+      } else {
+        stored_pair = stored_pair->next; 
+        passed_head++; 
+      }
+    }
+  } else {
+    printf("Key not found in hash table!");
+  }
 }
 
 /*
@@ -179,6 +206,8 @@ int main(void)
   hash_table_insert(ht, "line_1", "Tiny hash table\n");
   hash_table_insert(ht, "line_2", "Filled beyond capacity\n");
   hash_table_insert(ht, "line_3", "Linked list saves the day!\n");
+
+  hash_table_remove(ht, "line_3");
 
   printf("%s", hash_table_retrieve(ht, "line_1"));
   printf("%s", hash_table_retrieve(ht, "line_2"));
