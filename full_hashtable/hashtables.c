@@ -126,7 +126,7 @@ void hash_table_insert(HashTable *ht, char *key, char *value)
  */
 void hash_table_remove(HashTable *ht, char *key)
 {
-  int index = hash(key, ht->storage);
+  int index = hash(key, ht->capacity);
   LinkedPair *stored_pair = ht->storage[index];
 
   if(stored_pair != NULL) {
@@ -136,7 +136,7 @@ void hash_table_remove(HashTable *ht, char *key)
       if(passed_head < 1 && strcmp(stored_pair->key, key) == 0) {
         if(stored_pair->next == NULL) {
           destroy_pair(stored_pair);
-          stored_pair = NULL; 
+          ht->storage[index] = NULL; 
           found_key = 1;
         } else {
           LinkedPair *stored_pair_temp = stored_pair->next;
@@ -180,11 +180,12 @@ char *hash_table_retrieve(HashTable *ht, char *key)
       } else if (stored_pair->next != NULL) {
         stored_pair = stored_pair->next; 
       } else {
-        printf("Could not find matching key!");
-        return NULL; 
+        return "Could not find matching key!\n"; 
       }
     }
   }
+
+  return NULL;
 }
 
 /*
@@ -225,7 +226,17 @@ void destroy_hash_table(HashTable *ht)
  */
 HashTable *hash_table_resize(HashTable *ht)
 {
-  HashTable *new_ht;
+  HashTable *new_ht = create_hash_table(ht->capacity * 2);
+  for (int i = 0; i < ht->capacity; i++) {
+    LinkedPair *stored_pair = ht->storage[i];
+
+    while (stored_pair != NULL) {
+      hash_table_insert(new_ht, stored_pair->key, stored_pair->value);
+      stored_pair = stored_pair->next; 
+    }
+  }
+
+  destroy_hash_table(ht);
 
   return new_ht;
 }
@@ -246,11 +257,11 @@ int main(void)
   printf("%s", hash_table_retrieve(ht, "line_2"));
   printf("%s", hash_table_retrieve(ht, "line_3"));
 
-  // int old_capacity = ht->capacity;
-  // ht = hash_table_resize(ht);
-  // int new_capacity = ht->capacity;
+  int old_capacity = ht->capacity;
+  ht = hash_table_resize(ht);
+  int new_capacity = ht->capacity;
 
-  // printf("\nResizing hash table from %d to %d.\n", old_capacity, new_capacity);
+  printf("\nResizing hash table from %d to %d.\n", old_capacity, new_capacity);
 
   destroy_hash_table(ht);
 
