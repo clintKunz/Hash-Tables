@@ -169,7 +169,22 @@ void hash_table_remove(HashTable *ht, char *key)
  */
 char *hash_table_retrieve(HashTable *ht, char *key)
 {
-  return NULL;
+  int index = hash(key, ht->capacity);
+  LinkedPair *stored_pair = ht->storage[index];
+
+  if (stored_pair != NULL) {
+    int found_key = 0;
+    while (!found_key) {
+      if (strcmp(key, stored_pair->key) == 0) {
+        return stored_pair->value; 
+      } else if (stored_pair->next != NULL) {
+        stored_pair = stored_pair->next; 
+      } else {
+        printf("Could not find matching key!");
+        return NULL; 
+      }
+    }
+  }
 }
 
 /*
