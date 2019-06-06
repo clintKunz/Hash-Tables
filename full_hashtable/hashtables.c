@@ -92,7 +92,31 @@ HashTable *create_hash_table(int capacity)
  */
 void hash_table_insert(HashTable *ht, char *key, char *value)
 {
+  int index = hash(key, ht->capacity);
+  LinkedPair *pair = create_pair(key, value);
+  LinkedPair *stored_pair = ht->storage[index];
 
+  if(stored_pair == NULL) {
+    ht->storage[index] = pair;
+  } else {
+    int found_spot = 0;
+    while (!found_spot) {
+      if (strcmp(key, stored_pair->key) == 0) {
+        printf("Warning: Overwriting value with same key in Hash Table\n");
+        //Revisit this next line
+        free(stored_pair->key);
+        free(stored_pair->value);
+        ht->storage[index]->key = pair->key;
+        ht->storage[index]->value = pair->value; 
+        found_spot = 1;
+      } else if (stored_pair->next == NULL) {
+        stored_pair->next = pair; 
+        found_spot = 1;
+      } else {
+        stored_pair = stored_pair->next; 
+      }
+    }
+  }
 }
 
 /*
@@ -160,11 +184,11 @@ int main(void)
   printf("%s", hash_table_retrieve(ht, "line_2"));
   printf("%s", hash_table_retrieve(ht, "line_3"));
 
-  int old_capacity = ht->capacity;
-  ht = hash_table_resize(ht);
-  int new_capacity = ht->capacity;
+  // int old_capacity = ht->capacity;
+  // ht = hash_table_resize(ht);
+  // int new_capacity = ht->capacity;
 
-  printf("\nResizing hash table from %d to %d.\n", old_capacity, new_capacity);
+  // printf("\nResizing hash table from %d to %d.\n", old_capacity, new_capacity);
 
   destroy_hash_table(ht);
 
