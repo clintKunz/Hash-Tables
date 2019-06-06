@@ -90,6 +90,15 @@ void hash_table_insert(BasicHashTable *ht, char *key, char *value)
 {
   int index = hash(key, ht->capacity);
   Pair *pair = create_pair(key, value);
+
+  Pair *stored_pair = ht->storage[index];
+  if (stored_pair != NULL) {
+    if (strcmp(key, stored_pair->key) != 0) {
+      printf("Warning: Overwriting value in Hash Table\n");
+    }
+    destroy_pair(stored_pair);
+  }
+
   ht->storage[index] = pair;
 }
 
@@ -105,8 +114,7 @@ void hash_table_remove(BasicHashTable *ht, char *key)
   // Check if key matches
   if (ht->storage[index] != NULL) {
     if (strcmp(ht->storage[index]->key, key) == 0) {
-      free(ht->storage[index]->key);
-      free(ht->storage[index]->value);
+      destroy_pair(ht->storage[index]);
       ht->storage[index] = NULL; 
     } else {
       printf("Keys don't match\n");
@@ -132,10 +140,10 @@ char *hash_table_retrieve(BasicHashTable *ht, char *key)
     } else {
       printf("Keys don't match\n");
     }
-  } else {
-    printf("Keys don't match\n");
-    return NULL; 
-  }
+  } 
+  
+  return NULL; 
+  
 }
 
 /****
