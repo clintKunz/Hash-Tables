@@ -194,7 +194,25 @@ char *hash_table_retrieve(HashTable *ht, char *key)
  */
 void destroy_hash_table(HashTable *ht)
 {
+  for (int i = 0; i < ht->capacity; i++) {
+    if (ht->storage[i] != NULL) {
+      LinkedPair *stored_pair = ht->storage[i];
+      int next_null = 0; 
+      while (!next_null) {
+        if (stored_pair->next != NULL) {
+          LinkedPair *stored_pair_temp = stored_pair->next;
+          destroy_pair(stored_pair);
+          stored_pair = stored_pair_temp;
+        } else {
+          destroy_pair(stored_pair);
+          next_null = 1; 
+        }
+      }
+    }
+  }
 
+  free(ht->storage);
+  free(ht);
 }
 
 /*
