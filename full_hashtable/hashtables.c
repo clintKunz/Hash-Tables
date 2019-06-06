@@ -73,7 +73,10 @@ unsigned int hash(char *str, int max)
  */
 HashTable *create_hash_table(int capacity)
 {
-  HashTable *ht;
+  HashTable *ht = malloc(sizeof(HashTable));
+
+  ht->storage = calloc(capacity, sizeof(LinkedPair *));
+  ht->capacity = capacity; 
 
   return ht;
 }
@@ -89,7 +92,28 @@ HashTable *create_hash_table(int capacity)
  */
 void hash_table_insert(HashTable *ht, char *key, char *value)
 {
+  int index = hash(key, ht->capacity);
+  LinkedPair *pair = create_pair(key, value);
+  LinkedPair *stored_pair = ht->storage[index];
 
+  if(stored_pair == NULL) {
+    ht->storage[index] = pair;
+  } else {
+    int found_spot = 0;
+    while (!found_spot) {
+      if (strcmp(key, stored_pair->key) == 0) {
+        printf("Warning: Overwriting value with same key in Hash Table\n");
+        //Revisit this next line
+        stored_pair->value = value; 
+        found_spot = 1;
+      } else if (stored_pair->next == NULL) {
+        stored_pair->next = pair; 
+        found_spot = 1;
+      } else {
+        stored_pair = stored_pair->next; 
+      }
+    }
+  }
 }
 
 /*
@@ -102,7 +126,37 @@ void hash_table_insert(HashTable *ht, char *key, char *value)
  */
 void hash_table_remove(HashTable *ht, char *key)
 {
+  int index = hash(key, ht->capacity);
+  LinkedPair *stored_pair = ht->storage[index];
 
+  if(stored_pair != NULL) {
+    int found_key = 0;
+    int passed_head = 0; 
+    while(!found_key) {
+      if(passed_head < 1 && strcmp(stored_pair->key, key) == 0) {
+        if(stored_pair->next == NULL) {
+          destroy_pair(stored_pair);
+          ht->storage[index] = NULL; 
+          found_key = 1;
+        } else {
+          LinkedPair *stored_pair_temp = stored_pair->next;
+          destroy_pair(stored_pair);
+          stored_pair = stored_pair_temp;
+          found_key = 1;
+        }
+      } else if(strcmp(stored_pair->next->key, key) == 0) {
+        LinkedPair *stored_pair_temp = stored_pair->next; 
+        stored_pair->next = stored_pair->next->next;  
+        destroy_pair(stored_pair_temp);
+        found_key = 1;
+      } else {
+        stored_pair = stored_pair->next; 
+        passed_head++; 
+      }
+    }
+  } else {
+    printf("Key not found in hash table!");
+  }
 }
 
 /*
@@ -115,6 +169,22 @@ void hash_table_remove(HashTable *ht, char *key)
  */
 char *hash_table_retrieve(HashTable *ht, char *key)
 {
+  int index = hash(key, ht->capacity);
+  LinkedPair *stored_pair = ht->storage[index];
+
+  if (stored_pair != NULL) {
+    int found_key = 0;
+    while (!found_key) {
+      if (strcmp(key, stored_pair->key) == 0) {
+        return stored_pair->value; 
+      } else if (stored_pair->next != NULL) {
+        stored_pair = stored_pair->next; 
+      } else {
+        return "Could not find matching key!\n"; 
+      }
+    }
+  }
+
   return NULL;
 }
 
@@ -125,7 +195,25 @@ char *hash_table_retrieve(HashTable *ht, char *key)
  */
 void destroy_hash_table(HashTable *ht)
 {
+  for (int i = 0; i < ht->capacity; i++) {
+    if (ht->storage[i] != NULL) {
+      LinkedPair *stored_pair = ht->storage[i];
+      int next_null = 0; 
+      while (!next_null) {
+        if (stored_pair->next != NULL) {
+          LinkedPair *stored_pair_temp = stored_pair->next;
+          destroy_pair(stored_pair);
+          stored_pair = stored_pair_temp;
+        } else {
+          destroy_pair(stored_pair);
+          next_null = 1; 
+        }
+      }
+    }
+  }
 
+  free(ht->storage);
+  free(ht);
 }
 
 /*
@@ -138,7 +226,17 @@ void destroy_hash_table(HashTable *ht)
  */
 HashTable *hash_table_resize(HashTable *ht)
 {
-  HashTable *new_ht;
+  HashTable *new_ht = create_hash_table(ht->capacity * 2);
+  for (int i = 0; i < ht->capacity; i++) {
+    LinkedPair *stored_pair = ht->storage[i];
+
+    while (stored_pair != NULL) {
+      hash_table_insert(new_ht, stored_pair->key, stored_pair->value);
+      stored_pair = stored_pair->next; 
+    }
+  }
+
+  destroy_hash_table(ht);
 
   return new_ht;
 }
@@ -152,6 +250,8 @@ int main(void)
   hash_table_insert(ht, "line_1", "Tiny hash table\n");
   hash_table_insert(ht, "line_2", "Filled beyond capacity\n");
   hash_table_insert(ht, "line_3", "Linked list saves the day!\n");
+
+  hash_table_remove(ht, "line_3");
 
   printf("%s", hash_table_retrieve(ht, "line_1"));
   printf("%s", hash_table_retrieve(ht, "line_2"));

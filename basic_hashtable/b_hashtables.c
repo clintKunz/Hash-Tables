@@ -70,7 +70,11 @@ unsigned int hash(char *str, int max)
  ****/
 BasicHashTable *create_hash_table(int capacity)
 {
-  BasicHashTable *ht;
+  BasicHashTable *ht = malloc(sizeof(BasicHashTable));
+
+  //calloc initializes with NULL values
+  ht->storage = calloc(capacity, sizeof(Pair *));
+  ht->capacity = capacity;
 
   return ht;
 }
@@ -84,7 +88,18 @@ BasicHashTable *create_hash_table(int capacity)
  ****/
 void hash_table_insert(BasicHashTable *ht, char *key, char *value)
 {
+  int index = hash(key, ht->capacity);
+  Pair *pair = create_pair(key, value);
 
+  Pair *stored_pair = ht->storage[index];
+  if (stored_pair != NULL) {
+    if (strcmp(key, stored_pair->key) != 0) {
+      printf("Warning: Overwriting value in Hash Table\n");
+    }
+    destroy_pair(stored_pair);
+  }
+
+  ht->storage[index] = pair;
 }
 
 /****
@@ -94,7 +109,19 @@ void hash_table_insert(BasicHashTable *ht, char *key, char *value)
  ****/
 void hash_table_remove(BasicHashTable *ht, char *key)
 {
-
+  // Find index
+  int index = hash(key, ht->capacity);
+  // Check if key matches
+  if (ht->storage[index] != NULL) {
+    if (strcmp(ht->storage[index]->key, key) == 0) {
+      destroy_pair(ht->storage[index]);
+      ht->storage[index] = NULL; 
+    } else {
+      printf("Keys don't match\n");
+    }
+  } else {
+    printf("Keys don't match\n");
+  }
 }
 
 /****
@@ -104,7 +131,19 @@ void hash_table_remove(BasicHashTable *ht, char *key)
  ****/
 char *hash_table_retrieve(BasicHashTable *ht, char *key)
 {
-  return NULL;
+   // hash to find index
+  int index = hash(key, ht->capacity);
+  // check if key matches
+  if (ht->storage[index] != NULL) {
+    if (strcmp(ht->storage[index]->key, key) == 0) {
+      return ht->storage[index]->value;
+    } else {
+      printf("Keys don't match\n");
+    }
+  } 
+  
+  return NULL; 
+  
 }
 
 /****
@@ -114,7 +153,17 @@ char *hash_table_retrieve(BasicHashTable *ht, char *key)
  ****/
 void destroy_hash_table(BasicHashTable *ht)
 {
-
+  // Free all elements
+  for (int i = 0; i < ht->capacity; i++) {
+    if(ht->storage[i] != NULL) {
+      destroy_pair(ht->storage[i]);
+    } else {
+      free(ht->storage[i]);
+    }
+  }
+  // Free hash
+  free(ht->storage);
+  free(ht);
 }
 
 
